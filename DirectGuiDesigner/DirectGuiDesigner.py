@@ -638,6 +638,9 @@ class DirectGuiDesigner(DirectObject):
 
     def selectElement(self, elementInfo, args=None):
         if self.selectedElement is not None:
+            if elementInfo is self.selectedElement:  # element already selected
+                return
+
             self.selectedElement.element.clearColorScale()
             self.ignoreKeyboardEvents()
             self.registerKeyboardEvents()
@@ -740,7 +743,9 @@ class DirectGuiDesigner(DirectObject):
                 t.elementInfo.element.setZ(self.mainView.editorFrame.getEditorCanvasSize()[2])
             if pos.z > self.mainView.editorFrame.getEditorCanvasSize()[3]:
                 t.elementInfo.element.setZ(self.mainView.editorFrame.getEditorCanvasSize()[3])
-        self.refreshProperties(t.elementInfo)
+
+        if t.startPos != pos:  # refresh properties if item was moved
+            self.refreshProperties(t.elementInfo)
 
         if t.hasMoved:
             base.messenger.send("addToKillRing",

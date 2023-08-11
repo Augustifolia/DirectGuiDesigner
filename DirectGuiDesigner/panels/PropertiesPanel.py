@@ -116,6 +116,8 @@ class PropertiesPanel(DirectObject):
         self.getEditorRootCanvas = getEditorRootCanvas
         self.getEditorPlacer = getEditorPlacer
 
+        self.setupRefreshScheduler()
+
     def setCustomWidgetDefinitions(self,customWidgetDefinitions):
         self.customWidgetDefinitions = customWidgetDefinitions
 
@@ -133,10 +135,9 @@ class PropertiesPanel(DirectObject):
                 self.parent["frameSize"][0], self.parent["frameSize"][1],
                 self.parent["frameSize"][2]+DGH.getRealHeight(self.lblHeader), self.parent["frameSize"][3])
 
-        if self.setupDone and not taskMgr.hasTaskNamed("updatePropPanel"):
+        if self.setupDone and not taskMgr.hasTaskNamed("refreshProperties") and not taskMgr.hasTaskNamed("updatePropPanel"):
             taskMgr.doMethodLater(0.99, self.clear, "clearPropPanel", extraArgs=[])
             taskMgr.doMethodLater(1, self.refreshProperties, "updatePropPanel", extraArgs=[])
-
 
     def setupProperties(self, headerText, elementInfo, elementDict):
         """Creates the set of editable properties for the given element"""
@@ -148,8 +149,37 @@ class PropertiesPanel(DirectObject):
         self.elementDict = elementDict
         self.refreshProperties()
 
+    def setupRefreshScheduler(self):
+        t = taskMgr.add(self.__scheduleRefreshAndClear, "scheduler")
+        t.waiting_calls = []
+
     def refreshProperties(self):
+        """Refreshes the properties panel (adds '__refreshProperties()' to scheduler)."""
+        assert taskMgr.hasTaskNamed("scheduler"), "scheduler not initialized"  # make sure scheduler is initialized
+        t = taskMgr.getTasksNamed("scheduler")[0]  # get scheduler
+        t.waiting_calls.append("refreshProperties")  # add request to scheduler
+
+    def __scheduleRefreshAndClear(self, task):
+        """Task for scheduling calls to __refreshProperties and __clear."""
+        if not task.waiting_calls:
+            return task.cont
+
+        if taskMgr.hasTaskNamed("refreshProperties"):
+            return task.cont
+
+        if task.waiting_calls[0] == "clear":
+            self.__clear()
+
+        elif task.waiting_calls[0] == "refreshProperties":
+            taskMgr.doMethodLater(0.0, self.__refreshProperties, "refreshProperties")
+
+        task.waiting_calls.pop(0)
+        return task.cont
+
+    async def __refreshProperties(self, task):
         # create the frame that will hold all our properties
+        num_awaits = 4
+        wait_time = 0.005
         self.mainBoxFrame = DirectBoxSizer(
             orientation=DGG.VERTICAL,
             frameColor=VBase4(0, 0, 0, 0),
@@ -200,11 +230,14 @@ class PropertiesPanel(DirectObject):
                 self.__createRootReParent(self.elementInfo)
 
                 # create the set of properties to edit on the main component
-                for definition in wd:
+                for index, definition in enumerate(wd):
+                    # let the rest of the application run for a bit
+                    if index % max(len(wd) // num_awaits, 1) == 0:
+                        await task.pause(wait_time)
                     try:
                         self.createProperty(definition, self.elementInfo)
                     except:
-                        #e = sys.exc_info()[1]
+                        # e = sys.exc_info()[1]
                         has_error = True
                         error_count += 1
                         logging.exception("Failed to load property for properties panel")
@@ -216,6 +249,7 @@ class PropertiesPanel(DirectObject):
                 # create the sub component set of properties to edit
                 groups = {}
                 for componentName, componentDefinition in self.elementInfo.element._DirectGuiBase__componentInfo.items():
+                    await task.pause(wait_time)  # let the rest of the application run for a bit
                     widget = componentDefinition[0]
                     wConfigure = componentDefinition[1]
                     wType = componentDefinition[2]
@@ -241,7 +275,10 @@ class PropertiesPanel(DirectObject):
                         self.__createInbetweenHeader(headerName)
                         subsection = self.createSection()
                         subWd = allDefinitions[wType]
-                        for definition in subWd:
+                        for index, definition in enumerate(subWd):
+                            # let the rest of the application run for a bit
+                            if index % max(len(subWd) // num_awaits, 1) == 0:
+                                await task.pause(wait_time)
                             # create the property for all definitions of this
                             # sub widget
                             try:
@@ -265,8 +302,8 @@ class PropertiesPanel(DirectObject):
             logging.exception("Error while loading properties panel")
 
         if has_error:
-            base.messenger.send("showWarning", [f"There were {error_count} Errors while loading the properties panel.\nSee log file for more details."])
-
+            base.messenger.send("showWarning", [
+                f"There were {error_count} Errors while loading the properties panel.\nSee log file for more details."])
 
         #
         # Reset property Frame framesize
@@ -375,8 +412,18 @@ class PropertiesPanel(DirectObject):
         else:
             logging.error(f"Edit type {definition.editType} not in Edit type definitions")
 
-    def clear(self):
-        if not hasattr(self, "mainBoxFrame"): return
+    @staticmethod
+    def clear():
+        """Clear the properties panel (adds '__clear()' to scheduler)."""
+        assert taskMgr.hasTaskNamed("scheduler"), "scheduler not initialized"
+        t = taskMgr.getTasksNamed("scheduler")[0]
+        t.waiting_calls.append("clear")
+
+    def __clear(self):
+        """Clears properties panel. Do not call directly, instead schedule a call with the 'clear()' method."""
+        if not hasattr(self, "mainBoxFrame"):
+            return
+
         if self.mainBoxFrame is not None:
             self.mainBoxFrame.destroy()
 
