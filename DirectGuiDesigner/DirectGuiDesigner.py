@@ -506,7 +506,7 @@ class DirectGuiDesigner(DirectObject):
             "control-v": [self.pasteElement],
             "shift-control-c": [self.copyOptions],
             "shift-control-v": [self.pasteOptions],
-            "delete": [self.removeElement],
+            "control-delete": [self.removeElement],
             "control-g": [self.mainView.toolBar.cb_grid.commandFunc, [None]],
             "control-h": [self.toggleElementVisibility],
             "f1": [self.showHelp],
@@ -1075,6 +1075,9 @@ class DirectGuiDesigner(DirectObject):
 
     def __copyOptions(self, elementInfoFrom, elementInfoTo, copyPosition=False):
         elementFrom = elementInfoFrom.element
+        if elementInfoTo is None:  # if no object is selected
+            return
+
         elementTo = elementInfoTo.element
         if elementFrom is None or elementTo is None: return
         try:
