@@ -1,6 +1,6 @@
 import logging
 
-from panda3d.core import NodePath
+from panda3d.core import NodePath, WindowProperties
 
 from direct.showbase.DirectObject import DirectObject
 
@@ -89,6 +89,8 @@ class MainView(DirectObject):
         self.mainSplitter.firstFrame["frameColor"] = (0,0,0,0)
         self.mainSplitter.secondFrame["frameColor"] = (0,0,0,0)
 
+        self.mainSplitter.splitter.bind(DGG.WITHIN, print, extraArgs=["1"])
+
         # The sizer which makes sure our splitter is filling up
         self.mainSplitSizer = DirectAutoSizer(
             updateOnWindowResize=False,
@@ -108,6 +110,8 @@ class MainView(DirectObject):
             splitterWidth=splitterWidth,
             splitterPos=DGH.getRealHeight(self.mainSplitter) / 3 * 2,
             pixel2d=True)
+
+        self.sidebarSplitterA.splitter.bind(DGG.WITHIN, print, extraArgs=["2"])
 
         # The sizer which makes sure our first part sidebar is filling up
         self.sideSplitSizerA = DirectAutoSizer(
@@ -214,3 +218,13 @@ class MainView(DirectObject):
         usually are located at the edges and corners of the editor and resemble
         the a2d* counterparts from the engine"""
         return self.editorFrame.getEditorPlacer(placerName)
+
+    def setCursor(self, within=True):
+        raise NotImplementedError
+        if within:
+            # set cursor to double arrow to show that bar can be dragged
+            wp = WindowProperties()
+
+        else:
+            # set cursor back to normal
+            ...

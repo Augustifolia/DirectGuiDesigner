@@ -1071,14 +1071,18 @@ class DirectGuiDesigner(DirectObject):
 
     def pasteOptions(self):
         if self.copyOptionsElementInfo is None: return
+
+        if self.selectedElement is None:  # if no object is selected
+            base.messenger.send("showInfo", ["Please select an object to paste to"])
+            return
+
         self.__copyOptions(self.copyOptionsElementInfo, self.selectedElement)
 
     def __copyOptions(self, elementInfoFrom, elementInfoTo, copyPosition=False):
         elementFrom = elementInfoFrom.element
-        if elementInfoTo is None:  # if no object is selected
-            return
-
         elementTo = elementInfoTo.element
+        print(elementInfoFrom)
+        print(elementInfoTo)
         if elementFrom is None or elementTo is None: return
         try:
             # store for undo

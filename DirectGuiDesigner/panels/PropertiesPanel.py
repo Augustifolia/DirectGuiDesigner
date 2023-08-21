@@ -132,13 +132,21 @@ class PropertiesPanel(DirectObject):
         """Refreshes the sizer and recalculates the framesize to fit the parents
         frame size"""
         self.sizer.refresh()
+        old_frame_size = self.propertiesFrame["frameSize"]
+
         self.propertiesFrame["frameSize"] = (
                 self.parent["frameSize"][0], self.parent["frameSize"][1],
                 self.parent["frameSize"][2]+DGH.getRealHeight(self.lblHeader), self.parent["frameSize"][3])
 
-        if self.setupDone and not taskMgr.hasTaskNamed("refreshProperties") and not taskMgr.hasTaskNamed("updatePropPanel"):
-            taskMgr.doMethodLater(0.99, self.clear, "clearPropPanel", extraArgs=[])
-            taskMgr.doMethodLater(1, self.refreshProperties, "updatePropPanel", extraArgs=[])
+        new_frame_size = self.propertiesFrame["frameSize"]
+
+        # only refresh properties panel if width has changed
+        if old_frame_size[0] == new_frame_size[0] and old_frame_size[1] == new_frame_size[1]:
+            return
+
+        if self.setupDone and not taskMgr.hasTaskNamed("updatePropPanel"):
+            taskMgr.doMethodLater(0.49, self.clear, "clearPropPanel", extraArgs=[])
+            taskMgr.doMethodLater(0.5, self.refreshProperties, "updatePropPanel", extraArgs=[])
 
     def setupProperties(self, headerText, elementInfo, elementDict):
         """Creates the set of editable properties for the given element"""
@@ -175,6 +183,21 @@ class PropertiesPanel(DirectObject):
             taskMgr.doMethodLater(0.0, self.__refreshProperties, "refreshProperties")
 
         task.waiting_calls.pop(0)
+        print(task.waiting_calls)
+
+        # remove unnecessary future calls (if there is already a clear and refresh scheduled we can trim the rest)
+        # we have to make sure that the last scheduled call is of the right type, to make sure the final state
+        # of the panel is right.
+        while len(task.waiting_calls) > 3:
+            if task.waiting_calls[-1] == task.waiting_calls[-2]:
+                task.waiting_calls.pop(-1)
+
+            elif task.waiting_calls[-1] == task.waiting_calls[-3]:
+                task.waiting_calls = task.waiting_calls[:-2]
+
+        print(task.waiting_calls)
+        print()
+
         return task.cont
 
     async def __refreshProperties(self, task):
@@ -636,7 +659,8 @@ class PropertiesPanel(DirectObject):
                 entriesBox.refresh()
                 for section, boxFrame in self.boxFrames.items():
                     boxFrame.refresh()
-                self.resizeFrame()
+                print("list")
+                # self.resizeFrame()
 
         self.__createPropertyHeader(definition.visiblename)
         listItems = PropertyHelper.getValues(definition, elementInfo)
@@ -702,8 +726,10 @@ class PropertiesPanel(DirectObject):
 
             if updateMainBox:
                 entriesBox.refresh()
-                self.boxFrame.refresh()
-                self.resizeFrame()
+                for section, boxFrame in self.boxFrames.items():
+                    boxFrame.refresh()
+                print("tuple")
+                # self.resizeFrame()
 
         self.__createPropertyHeader(definition.visiblename)
         listItems = PropertyHelper.getValues(definition, elementInfo)
@@ -782,8 +808,10 @@ class PropertiesPanel(DirectObject):
             value = text
             if text == "" and definition.nullable:
                 value = None
+                print("nullable")
             elif definition.loaderFunc is not None and text != "":
                 try:
+                    print("loaderfunc")
                     if type(definition.loaderFunc) is str:
                         value = eval(definition.loaderFunc)
                     else:
@@ -793,10 +821,13 @@ class PropertiesPanel(DirectObject):
                     value = text
             base.messenger.send("setDirtyFlag")
             try:
+                print("setvalue", value, definition)
                 PropertyHelper.setValue(definition, elementInfo, value, text)
             except Exception:
-                logging.exception("Couldn't load font: {}".format(text))
-                updateElement[updateAttribute] = None
+                print("exception")
+                base.messenger.send("showWarning", [f"couldn't load file '{text}'"])
+                logging.exception("Couldn't load path: {}".format(text))
+                elementInfo.element[definition.internalName] = None
 
         def setPath(path):
             update(path)

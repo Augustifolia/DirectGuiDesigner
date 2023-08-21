@@ -224,7 +224,7 @@ TEXT_DEFINITIONS = [
     #Definition('shadowOffset', 'Shadow Offset', tuple, editType=t.base2), # needs to be set on the textNode, there is no way to set this through OnscreenText
     Definition('frame', 'Frame', object, editType=t.base4, nullable=True),
     Definition('align', 'Align', object, editType=t.optionMenu, valueOptions={"Left":0,"Right":1,"Center":2,"Boxed Left":3,"Boxed Right":4,"Boxed Center":5}),
-    #Definition('wordwrap', 'Wordwrap', object, editType=t.float), #TODO
+    Definition('wordwrap', 'Wordwrap', object, editType=t.float, nullable=True), #TODO
     #Definition('drawOrder', 'Draw Order', object, editType=t.integer, nullable=True), #TODO
     Definition('decal', 'Decal', int),
     Definition('font', 'Font', object, editType=t.path, loaderFunc="loader.loadFont(value)", nullable=True),
@@ -238,11 +238,13 @@ TEXT_DEFINITIONS = [
 DIRECT_FRAME_DEFINITIONS = DEFAULT_DEFINITIONS + [
     # Frame can have:
     # A background texture
-    Definition('image', 'Image', object, editType=t.path),
+    Definition('image', 'Image', object, editType=t.path, nullable=True),
     # A midground geometry item
-    Definition('geom', 'Geometry', object, editType=t.path),
+    Definition('geom', 'Geometry', object, editType=t.path, nullable=True),
     # A foreground text node
     Definition('text', 'Text', object, editType=t.list, nullable=True, postProcessFunctionName='resetFrameSize'),
+    # set word-wrap parameter of the text node
+    # Definition('text_wordwrap', 'WordWrap', object, t.float, nullable=True),
     # Change default value of text mayChange flag from 0
     # (OnscreenTexeditType=t.py) to 1
     Definition('textMayChange', 'Text May Change', bool)
