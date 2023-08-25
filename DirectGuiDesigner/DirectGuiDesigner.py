@@ -19,7 +19,8 @@ from panda3d.core import (
     ConfigVariableSearchPath,
     TextNode,
     TextProperties,
-    TextPropertiesManager
+    TextPropertiesManager,
+    NodePath
 )
 
 from direct.gui import DirectGuiGlobals as DGG
@@ -133,7 +134,7 @@ class DirectGuiDesigner(DirectObject):
         self.enable_events()
 
         # editor close and crash handling
-        sys.excepthook = self.excHandler
+        # sys.excepthook = self.excHandler
         base.win.setCloseRequestEvent("quitApp")
 
         # Load user custom widgets
@@ -641,7 +642,12 @@ class DirectGuiDesigner(DirectObject):
             if elementInfo is self.selectedElement:  # element already selected
                 return
 
-            self.selectedElement.element.clearColorScale()
+            if self.selectedElement is self.theCutElement:
+                self.selectedElement.element.setColorScale(0.5, 0.5, 0.5, 0.5)
+
+            else:
+                self.selectedElement.element.clearColorScale()
+
             self.ignoreKeyboardEvents()
             self.registerKeyboardEvents()
         if elementInfo is None:
@@ -656,7 +662,11 @@ class DirectGuiDesigner(DirectObject):
         if elementInfo.element is None:
             return
         self.selectedElement = elementInfo
-        elementInfo.element.setColorScale(1,1,0,1)
+        if self.selectedElement is self.theCutElement:
+            elementInfo.element.setColorScale(0.5, 0.5, 0, 0.5)
+        else:
+            elementInfo.element.setColorScale(1,1,0,1)
+
         self.refreshProperties(elementInfo)
         base.messenger.send("refreshStructureTree")
 
@@ -1001,7 +1011,11 @@ class DirectGuiDesigner(DirectObject):
 
     def cutElement(self):
         if self.selectedElement is None: return
+        if self.theCutElement is not None:
+            self.theCutElement.element.clearColorScale()
+
         self.theCutElement = self.selectedElement
+        self.theCutElement.element.setColorScale(0.5, 0.5, 0, 0.5)
 
     def pasteElement(self):
         # check if we want to have a cut or copy action
@@ -1017,6 +1031,8 @@ class DirectGuiDesigner(DirectObject):
         # stores the ids of the source elements that have been copied already
         self.copyCreatedElementIds = []
         self.newElementIds = []
+        self.elementsToCopy = self.copiedElement.element.get_children()
+        self.elementsToCopy.append(self.copiedElement.element)
         self.__copyBranch(self.copiedElement, self.selectedElement)
 
         if self.newElementIds == []:
@@ -1026,9 +1042,9 @@ class DirectGuiDesigner(DirectObject):
             [e, "copy", "element", (self.newElementIds[0], e), None])
 
     def __copyBranch(self, startObject, parent=None):
-        if startObject == parent: return
         for elementName, elementInfo in self.elementDict.copy().items():
             if elementInfo.element.guiId in self.copyCreatedElementIds: continue
+            if elementInfo.element not in self.elementsToCopy: continue
             if elementInfo.parent == startObject or elementInfo == startObject:
                 newElement = self.__createControl(elementInfo.type)
                 if type(newElement) is tuple:
@@ -1050,17 +1066,22 @@ class DirectGuiDesigner(DirectObject):
     def pasteCutElement(self):
         if self.theCutElement is None: return
         if self.theCutElement == self.selectedElement: return
+        old_parent = self.theCutElement.parent
 
-        parent = self.selectedElement
         if self.selectedElement is None:
-            parent = editorFrame
+            parent = self.mainView.getEditorPlacer("root")
 
-        self.theCutElement.element.reparentTo(self.selectedElement.element)
+            self.theCutElement.element.reparentTo(parent)
+            self.theCutElement.parent = None
 
-        for elementName, elementInfo in self.elementDict.items():
-            if elementInfo == self.theCutElement:
-                self.elementDict[elementName].parent = self.selectedElement
+        else:
+            if self.theCutElement.element.isAncestorOf(self.selectedElement.element): return
 
+            parent = self.selectedElement
+            self.theCutElement.element.reparentTo(parent.element)
+            self.theCutElement.parent = parent
+
+        self.theCutElement.element.clearColorScale()
         self.theCutElement = None
 
         base.messenger.send("refreshStructureTree")

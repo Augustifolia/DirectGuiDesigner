@@ -126,6 +126,9 @@ class PropertiesPanel(DirectObject):
         """Scrolls the properties frame vertically with the given step.
         A negative step will scroll down while a positive step value will scroll
         the frame upwards"""
+        if self.propertiesFrame.verticalScroll.isHidden():
+            return
+
         self.propertiesFrame.verticalScroll.scrollStep(scrollStep)
 
     def resizeFrame(self):
@@ -659,7 +662,6 @@ class PropertiesPanel(DirectObject):
                 entriesBox.refresh()
                 for section, boxFrame in self.boxFrames.items():
                     boxFrame.refresh()
-                print("list")
                 # self.resizeFrame()
 
         self.__createPropertyHeader(definition.visiblename)
@@ -728,7 +730,6 @@ class PropertiesPanel(DirectObject):
                 entriesBox.refresh()
                 for section, boxFrame in self.boxFrames.items():
                     boxFrame.refresh()
-                print("tuple")
                 # self.resizeFrame()
 
         self.__createPropertyHeader(definition.visiblename)
@@ -828,6 +829,9 @@ class PropertiesPanel(DirectObject):
                 base.messenger.send("showWarning", [f"couldn't load file '{text}'"])
                 logging.exception("Couldn't load path: {}".format(text))
                 elementInfo.element[definition.internalName] = None
+
+            self.clear()
+            self.refreshProperties()
 
         def setPath(path):
             update(path)
