@@ -40,6 +40,7 @@ from DirectGuiExtension import DirectGuiHelper as DGH
 from DirectGuiExtension.DirectBoxSizer import DirectBoxSizer
 from DirectGuiExtension.DirectAutoSizer import DirectAutoSizer
 from DirectGuiExtension.DirectCollapsibleFrame import DirectCollapsibleFrame
+from DirectGuiExtension.DirectGridSizer import DirectGridSizer
 
 from DirectGuiDesigner.core import WidgetDefinition
 from DirectGuiDesigner.core.PropertyHelper import PropertyHelper
@@ -1004,28 +1005,42 @@ class PropertiesPanel(DirectObject):
             base.messenger.send("setDirtyFlag")
             parent = self.getEditorPlacer(name)
             elementInfo.element.reparentTo(parent)
-            elementInfo.parent = parent
+            if name == "canvasRoot":
+                elementInfo.parent = None
+            else:
+                elementInfo.parent = parent
             base.messenger.send("refreshStructureTree")
 
         self.__createPropertyHeader("Change Root parent")
 
-        def createReparentButton(txt, arg):
+        grid_sizer = DirectGridSizer(
+            numRows=3,
+            numColumns=3,
+            frameSize=(
+                self.propertiesFrame["frameSize"][0],
+                self.propertiesFrame["frameSize"][1],
+                0, 20)
+        )
+        self.boxFrame.addItem(grid_sizer, skipRefresh=True)
+
+        def createReparentButton(txt, arg, row=0, column=0):
             btn = DirectButton(
                 text=txt,
-                pad=(0.25,0.25),
+                # pad=(0.25,0.25),
+                frameSize=(-4, 4, -1, 1),
                 scale=12,
                 command=update,
-                extraArgs=[arg]
+                extraArgs=[arg],
                 )
             btn.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
             btn.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
-            self.boxFrame.addItem(btn, skipRefresh=True)
-        createReparentButton("Root", "canvasRoot")
-        createReparentButton("Center Left", "canvasLeftCenter")
-        createReparentButton("Center Right", "canvasRightCenter")
-        createReparentButton("Top Left", "canvasTopLeft")
-        createReparentButton("Top Right", "canvasTopRight")
-        createReparentButton("Top Center", "canvasTopCenter")
-        createReparentButton("Bottom Left", "canvasBottomLeft")
-        createReparentButton("Bottom Right", "canvasBottomRight")
-        createReparentButton("Bottom Center", "canvasBottomCenter")
+            grid_sizer.addItem(btn, row, column)
+        createReparentButton("Root", "canvasRoot", 1, 1)
+        createReparentButton("Center Left", "canvasLeftCenter", 1, 0)
+        createReparentButton("Center Right", "canvasRightCenter", 1, 2)
+        createReparentButton("Top Left", "canvasTopLeft", 0, 0)
+        createReparentButton("Top Right", "canvasTopRight", 0, 2)
+        createReparentButton("Top Center", "canvasTopCenter", 0, 1)
+        createReparentButton("Bottom Left", "canvasBottomLeft", 2, 0)
+        createReparentButton("Bottom Right", "canvasBottomRight", 2, 2)
+        createReparentButton("Bottom Center", "canvasBottomCenter", 2, 1)

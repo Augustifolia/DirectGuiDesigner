@@ -73,57 +73,62 @@ class CustomWidgets():
                 if configFileContent["baseWidget"] in DEFINITIONS:
                     self.customWidgetDefinitions[configFileContent["className"]] += DEFINITIONS[configFileContent["baseWidget"]]
 
-            if "customProperties" in configFileContent:
-                for prop in configFileContent["customProperties"]:
+            try:
+                if "customProperties" in configFileContent:
+                    for prop in configFileContent["customProperties"]:
 
-                    t = None
-                    if "internalType" in prop:
-                        if prop["internalType"] == "int":
-                            t = int
-                        elif prop["internalType"] == "float":
-                            t = float
-                        elif prop["internalType"] == "bool":
-                            t = bool
-                        elif prop["internalType"] == "str":
-                            t = str
-                        elif prop["internalType"] == "function":
-                            t = types.FunctionType
-                        elif prop["internalType"] == "list":
-                            t = list
-                        elif prop["internalType"] == "tuple":
-                            t = tuple
-                        elif prop["internalType"] == "object":
-                            t = object
+                        t = None
+                        if "internalType" in prop:
+                            if prop["internalType"] == "int":
+                                t = int
+                            elif prop["internalType"] == "float":
+                                t = float
+                            elif prop["internalType"] == "bool":
+                                t = bool
+                            elif prop["internalType"] == "str":
+                                t = str
+                            elif prop["internalType"] == "function":
+                                t = types.FunctionType
+                            elif prop["internalType"] == "list":
+                                t = list
+                            elif prop["internalType"] == "tuple":
+                                t = tuple
+                            elif prop["internalType"] == "object":
+                                t = object
 
-                    self.customWidgetDefinitions[configFileContent["className"]].append(
-                        Definition(
-                            prop["internalName"],
-                            prop["visiblename"],
-                            t,
-                            prop["editType"] if "editType" in prop else None,
-                            prop["nullable"] if "nullable" in prop else False,
-                            prop["supportStates"] if "supportStates" in prop else False,
-                            prop["valueOptions"] if "valueOptions" in prop else None,
-                            prop["isInitOption"] if "isInitOption" in prop else False,
-                            prop["getFunctionName"] if "getFunctionName" in prop else None,
-                            prop["setFunctionName"] if "setFunctionName" in prop else None,
-                            prop["addToExtraOptions"] if "addToExtraOptions" in prop else False,
-                            prop["loaderFunc"] if "loaderFunc" in prop else None,
-                            prop["postProcessFunctionName"] if "postProcessFunctionName" in prop else None,
-                            prop["canGetValueFromElement"] if "canGetValueFromElement" in prop else True
-                        ))
+                        self.customWidgetDefinitions[configFileContent["className"]].append(
+                            Definition(
+                                prop["internalName"],
+                                prop["visiblename"],
+                                t,
+                                prop["editType"] if "editType" in prop else None,
+                                prop["nullable"] if "nullable" in prop else False,
+                                prop["supportStates"] if "supportStates" in prop else False,
+                                prop["valueOptions"] if "valueOptions" in prop else None,
+                                prop["isInitOption"] if "isInitOption" in prop else False,
+                                prop["getFunctionName"] if "getFunctionName" in prop else None,
+                                prop["setFunctionName"] if "setFunctionName" in prop else None,
+                                prop["addToExtraOptions"] if "addToExtraOptions" in prop else False,
+                                prop["loaderFunc"] if "loaderFunc" in prop else None,
+                                prop["postProcessFunctionName"] if "postProcessFunctionName" in prop else None,
+                                prop["canGetValueFromElement"] if "canGetValueFromElement" in prop else True
+                            ))
+            except:
+                print("except 1")
 
 
-
-            self.customWidgetsDict[configFileContent["name"]] = CustomWidget(
-                configFileContent["displayName"],
-                configFileContent["className"],
-                configFileContent["classfilePath"],
-                module,
-                configFileContent["addItemFunctionName"] if "addItemFunctionName" in configFileContent else None,
-                configFileContent["removeItemFunctionName"] if "removeItemFunctionName" in configFileContent else None,
-                configFileContent["importPath"])
-            self.toolboxExtensionList.append([configFileContent["displayName"], configFileContent["className"]])
+            try:
+                self.customWidgetsDict[configFileContent["name"]] = CustomWidget(
+                    configFileContent["displayName"],
+                    configFileContent["className"],
+                    configFileContent["classfilePath"],
+                    module,
+                    configFileContent["addItemFunctionName"] if "addItemFunctionName" in configFileContent else None,
+                    configFileContent["removeItemFunctionName"] if "removeItemFunctionName" in configFileContent else None,
+                    configFileContent["importPath"])
+                self.toolboxExtensionList.append([configFileContent["displayName"], configFileContent["className"]])
+            except:
+                print("except 2")
         self.extendToolbox()
         self.extendElementHandler()
 

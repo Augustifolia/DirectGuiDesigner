@@ -1066,7 +1066,6 @@ class DirectGuiDesigner(DirectObject):
     def pasteCutElement(self):
         if self.theCutElement is None: return
         if self.theCutElement == self.selectedElement: return
-        old_parent = self.theCutElement.parent
 
         if self.selectedElement is None:
             parent = self.mainView.getEditorPlacer("root")

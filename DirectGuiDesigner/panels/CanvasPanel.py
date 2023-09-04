@@ -191,16 +191,23 @@ class CanvasPanel():
 
     def setCanvasPlacers(self):
         cs = self.getEditorCanvasSize()
+        # print(cs)
         self.canvasLeft = cs[0]
         self.canvasRight = cs[1]
         self.canvasBottom = cs[2]
         self.canvasTop = cs[3]
+        center_x = (self.canvasRight + self.canvasLeft) / 2
+        center_z = (self.canvasTop + self.canvasBottom) / 2
+        print(center_x, center_z)
+
+        # self.getEditorRootCanvas().setPos(center_x, 0, center_z)
+        # self.grid.setPos(-center_x, 0, -center_z)
 
         # Put the nodes in their places
-        self.canvasTopCenter.setPos(0, 0, self.canvasTop)
-        self.canvasBottomCenter.setPos(0, 0, self.canvasBottom)
-        self.canvasLeftCenter.setPos(self.canvasLeft, 0, 0)
-        self.canvasRightCenter.setPos(self.canvasRight, 0, 0)
+        self.canvasTopCenter.setPos(center_x, 0, self.canvasTop)
+        self.canvasBottomCenter.setPos(center_x, 0, self.canvasBottom)
+        self.canvasLeftCenter.setPos(self.canvasLeft, 0, center_z)
+        self.canvasRightCenter.setPos(self.canvasRight, 0, center_z)
 
         self.canvasTopLeft.setPos(self.canvasLeft, 0, self.canvasTop)
         self.canvasTopRight.setPos(self.canvasRight, 0, self.canvasTop)
