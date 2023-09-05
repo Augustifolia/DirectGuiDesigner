@@ -23,6 +23,15 @@ class KillRingEntry():
         self.children = self.children[-1:] + self.children[:-1]
         self.activeChild = self.children[-1]
 
+    def __repr__(self):
+        return (
+            f"{self.editObject=}\n"
+            f"{self.action=}\n"
+            f"{self.objectType=}\n"
+            f"{self.oldValue=}\n"
+            f"{self.newValue=}\n"
+        )
+
 class KillRing():
     def __init__(self):
         self.currentRoot = KillRingEntry()

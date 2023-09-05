@@ -26,6 +26,8 @@ from panda3d.core import (
 from direct.gui import DirectGuiGlobals as DGG
 
 from direct.gui.DirectFrame import DirectFrame
+
+from DirectGuiDesigner.core.PropertyHelper import PropertyHelper
 #from direct.gui.DirectScrolledFrame import DirectScrolledFrame
 from DirectGuiDesigner.directGuiOverrides.DirectScrolledFrame import DirectScrolledFrame
 from direct.gui.DirectDialog import OkDialog
@@ -330,10 +332,16 @@ class DirectGuiDesigner(DirectObject):
                 workOn.editObject.element.setTransparency(workOn.oldValue)
             else:
                 try:
-                    logging.debug(f"try undo {workOn.objectType} to {workOn.oldValue}")
-                    workOn.editObject.element[workOn.objectType] = workOn.oldValue
+                    # todo actually fix this
+                    PropertyHelper.setValue(WidgetDefinition.SCALE_DEFINITION, workOn.editObject, workOn.oldValue)
                 except:
-                    logging.exception(f"property {workOn.objectType} currently not supported by undo/redo")
+                    print("no good")
+                    try:
+                        print("try")
+                        logging.debug(f"try undo {workOn.objectType} to {workOn.oldValue}")
+                        workOn.editObject.element[workOn.objectType] = workOn.oldValue
+                    except:
+                        logging.exception(f"property {workOn.objectType} currently not supported by undo/redo")
 
         elif workOn.action == "add" and workOn.objectType == "element":
             logging.debug(f"undo remove added element {workOn.editObject}")
